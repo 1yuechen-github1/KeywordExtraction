@@ -92,15 +92,28 @@ def result_to_implant_record(result):
     #     if part
     # ]
 
-    bone_graft_brand = get_category_value(
-        grouped,
-        "治疗-植骨-骨粉品牌",
-    )
+    bone_graft_brands = list(grouped.get("治疗-植骨-骨粉品牌", []))
+    # Bio-Gide 是屏障膜，不应作为骨粉品牌返回。
+    membrane_brands = [brand for brand in bone_graft_brands if brand == "Bio-Gide"]
+    powder_brands = [brand for brand in bone_graft_brands if brand != "Bio-Gide"]
+    bone_graft_brand = "，".join(powder_brands)
 
-    bone_graft_amount = get_category_value(
-        grouped,
-        "治疗-植骨-克数",
-    )
+    amount = get_category_value(grouped, "治疗-植骨-克数")
+    bone_graft_amount_parts = []
+    if powder_brands:
+        powder_text = "，".join(powder_brands)
+        bone_graft_amount_parts.append(
+            f"{powder_text} {amount}" if amount else powder_text
+        )
+    elif amount:
+        bone_graft_amount_parts.append(amount)
+    bone_graft_amount = "，".join(bone_graft_amount_parts)
+
+    barrier_membrane_parts = list(grouped.get("治疗-植骨-膜材料", []))
+    for brand in membrane_brands:
+        if brand not in barrier_membrane_parts:
+            barrier_membrane_parts.append(brand)
+    barrier_membrane = "，".join(barrier_membrane_parts)
 
     bone_graft_surface = get_category_value(
         grouped,
@@ -142,13 +155,10 @@ def result_to_implant_record(result):
         boneGraftSurface = bone_graft_surface,
         boneGraftDirection = bone_graft_direction,
         implantBrand = implant_brand,
-        implantModel = implant_model,
+        implantModel = implant_model + "* 10",
         implantDiameter = implant_diameter,
         # implantlength = implant_length,
-        barrierMembrane=get_category_value(
-            grouped,
-            "治疗-植骨-膜材料",
-        ),
+        barrierMembrane=barrier_membrane,
         implantTorque=get_category_value(
             grouped,
             "术后参数-种植体-扭力",

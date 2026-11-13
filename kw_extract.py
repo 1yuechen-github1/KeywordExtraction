@@ -409,7 +409,14 @@ def extract(text, tax=None):
     for k, v in tax.items():
         if not k or len(k) < 2:
             continue
-        if k not in body:
+        # For short alphanumeric codes (e.g. ``BL``), a plain substring
+        # check would also match the code inside a longer model name such as
+        # ``BLT``.  Require token boundaries in that case so BLT is not
+        # incorrectly emitted as both BLT and BL.
+        if re.fullmatch(r"[A-Za-z0-9]+", k):
+            if not re.search(r"(?<![A-Za-z0-9])" + re.escape(k) + r"(?![A-Za-z0-9])", body):
+                continue
+        elif k not in body:
             continue
         if re.fullmatch(r"[1-4][1-8]", k):
             ok = False
@@ -627,7 +634,6 @@ def main():
 
 if __name__ == "__main__":
     main()
-
 
 
 

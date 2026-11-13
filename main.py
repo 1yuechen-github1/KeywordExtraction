@@ -96,7 +96,7 @@ def result_to_implant_record(result):
     # Bio-Gide 是屏障膜，不应作为骨粉品牌返回。
     membrane_brands = [brand for brand in bone_graft_brands if brand == "Bio-Gide"]
     powder_brands = [brand for brand in bone_graft_brands if brand != "Bio-Gide"]
-    bone_graft_brand = "，".join(powder_brands)
+    bone_graft_brand = "，".join(membrane_brands)
 
     amount = get_category_value(grouped, "治疗-植骨-克数")
     bone_graft_amount_parts = []

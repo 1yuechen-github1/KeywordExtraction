@@ -1,9 +1,12 @@
 from fastapi import FastAPI, File, HTTPException, UploadFile
 
 from kw_extract import kw_extract
+from logger_config import logger
 from dto.ImplantSurgeryRecordDto import ImplantSurgeryRecordDto
 
 app = FastAPI()
+
+logger.info("FastAPI 服务加载完成")
 
 
 @app.get("/")
@@ -181,13 +184,16 @@ def result_to_implant_record(result):
 
 @app.post("/kw_extract")
 async def kw_extract_api(file: UploadFile = File(...)):
+    logger.info("收到文件上传请求，文件名=%s", file.filename)
     if not file.filename:
+        logger.warning("上传失败：未选择文件")
         raise HTTPException(
             status_code=400,
             detail="未选择文件",
         )
 
     if not file.filename.lower().endswith(".txt"):
+        logger.warning("上传失败：文件类型不支持，文件名=%s", file.filename)
         raise HTTPException(
             status_code=400,
             detail="只支持 TXT 文件",
@@ -195,6 +201,7 @@ async def kw_extract_api(file: UploadFile = File(...)):
 
     try:
         file_bytes = await file.read()
+        logger.info("文件读取完成，文件名=%s，字节数=%d", file.filename, len(file_bytes))
 
         try:
             text = file_bytes.decode("utf-8-sig")
@@ -211,6 +218,7 @@ async def kw_extract_api(file: UploadFile = File(...)):
 
         result = kw_extract(text)
         implant_record = result_to_implant_record(result)
+        logger.info("病例处理成功，文件名=%s，返回数据=%s", file.filename, implant_record.to_dict())
         # print("implant_record:",implant_record)
         return {
             "code": 0,
@@ -223,6 +231,7 @@ async def kw_extract_api(file: UploadFile = File(...)):
 
 
     except Exception as error:
+        logger.exception("病例处理失败，文件名=%s，错误=%s", file.filename, error)
         raise HTTPException(
             status_code=500,
             detail=f"关键词提取失败：{error}",

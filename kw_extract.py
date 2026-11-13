@@ -31,6 +31,8 @@ import re
 import sys
 from collections import OrderedDict
 
+from logger_config import logger
+
 # ─────────────────────────────────────────────────────────────────────────────
 # 0. 内置词表（词 → 三阶类别）；若外部 kw_taxonomy.json 存在则覆盖
 # ─────────────────────────────────────────────────────────────────────────────
@@ -558,9 +560,17 @@ def kw_extract(text):
     """
     接收病历文本，返回关键词提取结果。
     """
-    tax = load_tax(None)
-    tokens, mapping = extract(text, tax)
-    grouped = group_by_cat(tokens, mapping)
+    logger.info("开始提取关键词，文本长度=%d", len(text or ""))
+    try:
+        tax = load_tax(None)
+        tokens, mapping = extract(text, tax)
+        grouped = group_by_cat(tokens, mapping)
+    except Exception:
+        logger.exception("关键词提取失败")
+        raise
+
+    logger.info("关键词提取完成，关键词数=%d，类别数=%d", len(tokens), len(grouped))
+    logger.info("提取关键词=%s", tokens)
 
     return {
         "关键词数": len(tokens),
@@ -634,7 +644,6 @@ def main():
 
 if __name__ == "__main__":
     main()
-
 
 
 
